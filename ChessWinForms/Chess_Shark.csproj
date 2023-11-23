@@ -1,0 +1,370 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{ADC711A8-D61E-436A-B1C9-2AADD848AD74}</ProjectGuid>
+    <OutputType>WinExe</OutputType>
+    <RootNamespace>Sachy_Obrazky</RootNamespace>
+    <AssemblyName>ChessShark</AssemblyName>
+    <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+    <Deterministic>true</Deterministic>
+    <IsWebBootstrapper>false</IsWebBootstrapper>
+    <PublishUrl>C:\8\</PublishUrl>
+    <Install>true</Install>
+    <InstallFrom>Disk</InstallFrom>
+    <UpdateEnabled>false</UpdateEnabled>
+    <UpdateMode>Foreground</UpdateMode>
+    <UpdateInterval>7</UpdateInterval>
+    <UpdateIntervalUnits>Days</UpdateIntervalUnits>
+    <UpdatePeriodically>false</UpdatePeriodically>
+    <UpdateRequired>false</UpdateRequired>
+    <MapFileExtensions>true</MapFileExtensions>
+    <ApplicationRevision>4</ApplicationRevision>
+    <ApplicationVersion>1.0.0.%2a</ApplicationVersion>
+    <UseApplicationTrust>false</UseApplicationTrust>
+    <PublishWizardCompleted>true</PublishWizardCompleted>
+    <BootstrapperEnabled>true</BootstrapperEnabled>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">
+    <DebugSymbols>true</DebugSymbols>
+    <OutputPath>bin\x64\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <DebugType>full</DebugType>
+    <PlatformTarget>x64</PlatformTarget>
+    <LangVersion>7.3</LangVersion>
+    <ErrorReport>prompt</ErrorReport>
+    <Prefer32Bit>true</Prefer32Bit>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'">
+    <OutputPath>bin\x64\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <Optimize>true</Optimize>
+    <DebugType>pdbonly</DebugType>
+    <PlatformTarget>x64</PlatformTarget>
+    <LangVersion>7.3</LangVersion>
+    <ErrorReport>prompt</ErrorReport>
+    <Prefer32Bit>true</Prefer32Bit>
+  </PropertyGroup>
+  <PropertyGroup>
+    <ManifestCertificateThumbprint>038EC6D04EA428E6682E46474480CA7F3645D3E0</ManifestCertificateThumbprint>
+  </PropertyGroup>
+  <PropertyGroup>
+    <ManifestKeyFile>Chess_Shark_TemporaryKey.pfx</ManifestKeyFile>
+  </PropertyGroup>
+  <PropertyGroup>
+    <GenerateManifests>true</GenerateManifests>
+  </PropertyGroup>
+  <PropertyGroup>
+    <SignManifests>true</SignManifests>
+  </PropertyGroup>
+  <PropertyGroup>
+    <ApplicationIcon>chess_pawn_black_icon1.ico</ApplicationIcon>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="DevExpress.Data.Desktop.v22.1, Version=22.1.6.0, Culture=neutral, PublicKeyToken=b88d1754d700e49a" />
+    <Reference Include="DevExpress.Data.v22.1, Version=22.1.6.0, Culture=neutral, PublicKeyToken=b88d1754d700e49a" />
+    <Reference Include="DevExpress.Drawing.v22.1, Version=22.1.6.0, Culture=neutral, PublicKeyToken=b88d1754d700e49a" />
+    <Reference Include="DevExpress.Printing.v22.1.Core, Version=22.1.6.0, Culture=neutral, PublicKeyToken=b88d1754d700e49a" />
+    <Reference Include="DevExpress.Utils.v22.1, Version=22.1.6.0, Culture=neutral, PublicKeyToken=b88d1754d700e49a, processorArchitecture=MSIL" />
+    <Reference Include="MaterialSkin, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>packages\MaterialSkin.0.2.1\lib\MaterialSkin.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Bcl.AsyncInterfaces, Version=7.0.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <HintPath>packages\Microsoft.Bcl.AsyncInterfaces.7.0.0\lib\net462\Microsoft.Bcl.AsyncInterfaces.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Office.Interop.Excel, Version=15.0.0.0, Culture=neutral, PublicKeyToken=71e9bce111e9429c, processorArchitecture=MSIL">
+      <HintPath>packages\Microsoft.Office.Interop.Excel.15.0.4795.1001\lib\net20\Microsoft.Office.Interop.Excel.dll</HintPath>
+      <EmbedInteropTypes>True</EmbedInteropTypes>
+    </Reference>
+    <Reference Include="PresentationCore" />
+    <Reference Include="System" />
+    <Reference Include="System.Buffers, Version=4.0.3.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <HintPath>packages\System.Buffers.4.5.1\lib\net461\System.Buffers.dll</HintPath>
+    </Reference>
+    <Reference Include="System.ComponentModel.DataAnnotations" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Memory, Version=4.0.1.2, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <HintPath>packages\System.Memory.4.5.5\lib\net461\System.Memory.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Numerics" />
+    <Reference Include="System.Numerics.Vectors, Version=4.1.4.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>packages\System.Numerics.Vectors.4.5.0\lib\net46\System.Numerics.Vectors.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Runtime.CompilerServices.Unsafe, Version=6.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>packages\System.Runtime.CompilerServices.Unsafe.6.0.0\lib\net461\System.Runtime.CompilerServices.Unsafe.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Runtime.Remoting" />
+    <Reference Include="System.Text.Encodings.Web, Version=7.0.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <HintPath>packages\System.Text.Encodings.Web.7.0.0\lib\net462\System.Text.Encodings.Web.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Text.Json, Version=7.0.0.1, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <HintPath>packages\System.Text.Json.7.0.1\lib\net462\System.Text.Json.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Threading.Tasks.Extensions, Version=4.2.0.1, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <HintPath>packages\System.Threading.Tasks.Extensions.4.5.4\lib\net461\System.Threading.Tasks.Extensions.dll</HintPath>
+    </Reference>
+    <Reference Include="System.ValueTuple, Version=4.0.3.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <HintPath>packages\System.ValueTuple.4.5.0\lib\net47\System.ValueTuple.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Deployment" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Xml" />
+    <Reference Include="UIAutomationClient" />
+    <Reference Include="WindowsBase" />
+    <Reference Include="ZedGraph, Version=5.1.7.430, Culture=neutral, PublicKeyToken=02a83cbd123fcd60, processorArchitecture=MSIL">
+      <HintPath>packages\ZedGraph.5.1.7\lib\net35-Client\ZedGraph.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="AuthenticationData.cs" />
+    <Compile Include="AuthenticationForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="AuthenticationForm.Designer.cs">
+      <DependentUpon>AuthenticationForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="ChessArrangement.cs" />
+    <Compile Include="ChessPartyHistory.cs" />
+    <Compile Include="ChessPiece.cs" />
+    <Compile Include="ChessRestoreArrangement.cs" />
+    <Compile Include="ChessRestoreArrangementsStorage.cs" />
+    <Compile Include="CongratulationForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="CongratulationForm.Designer.cs">
+      <DependentUpon>CongratulationForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Models\ReasonCompletionAttempt.cs" />
+    <Compile Include="Models\StatusParty.cs" />
+    <Compile Include="Models\ViewStatistic.cs" />
+    <Compile Include="Repository\JsonProvider.cs" />
+    <Compile Include="Repository\IRepository.cs" />
+    <Compile Include="Repository\PartyRepository.cs" />
+    <Compile Include="Repository\PlayerRepository.cs" />
+    <Compile Include="Windows\CreatorPartyForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Windows\CreatorPartyForm.Designer.cs">
+      <DependentUpon>CreatorPartyForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Attept.cs" />
+    <Compile Include="Models\Party.cs" />
+    <Compile Include="Models\Player.cs" />
+    <Compile Include="Models\Step.cs" />
+    <Compile Include="Windows\CoordinateTestForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Windows\CoordinateTestForm.Designer.cs">
+      <DependentUpon>CoordinateTestForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="CoordinateTrainingInfo.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="CoordinateTrainingInfo.Designer.cs">
+      <DependentUpon>CoordinateTrainingInfo.cs</DependentUpon>
+    </Compile>
+    <Compile Include="DifficultNotSelectedForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="DifficultNotSelectedForm.Designer.cs">
+      <DependentUpon>DifficultNotSelectedForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Engine.cs" />
+    <Compile Include="Form1.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Form1.Designer.cs">
+      <DependentUpon>Form1.cs</DependentUpon>
+    </Compile>
+    <Compile Include="LosingForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="LosingForm.Designer.cs">
+      <DependentUpon>LosingForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Windows\GraphForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Windows\GraphForm.Designer.cs">
+      <DependentUpon>GraphForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Windows\InputPathForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Windows\InputPathForm.Designer.cs">
+      <DependentUpon>InputPathForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Windows\MainForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Windows\MainForm.Designer.cs">
+      <DependentUpon>MainForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Program.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Windows\RestoringPositionForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Windows\RestoringPositionForm.Designer.cs">
+      <DependentUpon>RestoringPositionForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Windows\RestoreChessPartyForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Windows\RestoreChessPartyForm.Designer.cs">
+      <DependentUpon>RestoreChessPartyForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="StorageAreEmptyForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="StorageAreEmptyForm.Designer.cs">
+      <DependentUpon>StorageAreEmptyForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="StorageFileNotExistsForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="StorageFileNotExistsForm.Designer.cs">
+      <DependentUpon>StorageFileNotExistsForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Windows\StatisticUserForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Windows\StatisticUserForm.Designer.cs">
+      <DependentUpon>StatisticUserForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Windows\StatisticUsersForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Windows\StatisticUsersForm.Designer.cs">
+      <DependentUpon>StatisticUsersForm.cs</DependentUpon>
+    </Compile>
+    <EmbeddedResource Include="AuthenticationForm.resx">
+      <DependentUpon>AuthenticationForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="CongratulationForm.resx">
+      <DependentUpon>CongratulationForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Windows\CreatorPartyForm.resx">
+      <DependentUpon>CreatorPartyForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="CoordinateTrainingInfo.resx">
+      <DependentUpon>CoordinateTrainingInfo.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="DifficultNotSelectedForm.resx">
+      <DependentUpon>DifficultNotSelectedForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Form1.resx">
+      <DependentUpon>Form1.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="LosingForm.resx">
+      <DependentUpon>LosingForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Windows\CoordinateTestForm.resx">
+      <DependentUpon>CoordinateTestForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Windows\GraphForm.resx">
+      <DependentUpon>GraphForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Windows\InputPathForm.resx">
+      <DependentUpon>InputPathForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Windows\MainForm.resx">
+      <DependentUpon>MainForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Properties\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+    <Compile Include="Properties\Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Resources.resx</DependentUpon>
+      <DesignTime>True</DesignTime>
+    </Compile>
+    <EmbeddedResource Include="StorageAreEmptyForm.resx">
+      <DependentUpon>StorageAreEmptyForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="StorageFileNotExistsForm.resx">
+      <DependentUpon>StorageFileNotExistsForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Windows\RestoringPositionForm.resx">
+      <DependentUpon>RestoringPositionForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Windows\RestoreChessPartyForm.resx">
+      <DependentUpon>RestoreChessPartyForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Windows\StatisticUserForm.resx">
+      <DependentUpon>StatisticUserForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Windows\StatisticUsersForm.resx">
+      <DependentUpon>StatisticUsersForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <None Include="Chess_Shark_TemporaryKey.pfx" />
+    <None Include="packages.config" />
+    <None Include="Properties\Settings.settings">
+      <Generator>SettingsSingleFileGenerator</Generator>
+      <LastGenOutput>Settings.Designer.cs</LastGenOutput>
+    </None>
+    <Compile Include="Properties\Settings.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Settings.settings</DependentUpon>
+      <DesignTimeSharedInput>True</DesignTimeSharedInput>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="App.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Res\user_icon_175761.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Res\chess_pawn_icon_137768.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <BootstrapperPackage Include=".NETFramework,Version=v4.7.2">
+      <Visible>False</Visible>
+      <ProductName>Microsoft .NET Framework 4.7.2 %28x86 и x64%29</ProductName>
+      <Install>true</Install>
+    </BootstrapperPackage>
+    <BootstrapperPackage Include="Microsoft.Net.Framework.3.5.SP1">
+      <Visible>False</Visible>
+      <ProductName>.NET Framework 3.5 SP1</ProductName>
+      <Install>false</Install>
+    </BootstrapperPackage>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="chess_icon.ico" />
+    <Content Include="chess_pawn_black_icon1.ico" />
+    <Content Include="License-LGPL.txt" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+</Project>

@@ -1,0 +1,825 @@
+This project has been made to allow players play chess against AI, and against each other, or AI against AI.
+The project consists mostly of two parts: the Form, which is necessary for Winforms apps, and the class "Engine" - which was originally made for console chess application.
+
+
+I. Code organization
+
+1) What does the chess engine need
+
+All the features needed to implement a back-end of chess engine are these:
+
+- Start of game: Where to place pieces, how strong will the engine be, how will it react to user input
+- Game rules: How can the piece move, when they cannot move, when game ends 
+- State of position: Where each piece is residing, which player is currently supposed to move, other hidden characteristic of position (e.g. castling rights)
+- Calculation and static evaluation: How will the computer analyze series of best moves, which moves will lead to the best outcome, and what is meant by "the best outcome".
+- Saving of game: How to write and interpret notation
+
+2) Format of variables
+
+The chess code needs to be very fast, therefore I have given up on my first approach, which involved splitting the functions and objects into classes.
+
+Instead, many "objects" are incoded in 4B or 8B integers. This improves the speed, but can cause complications with reading code.
+
+Many functions therefore rely on excessive usage of bit-shift operations. For this reason, one of the most used functions is function Bit - 
+	which simply checks if the bit is set on a given position.
+	
+Most of the code is therefore driven by these 3 variables: Move, Position and bitboards (in general):
+
+a) Move 
+	Incodes a move in these 4 bytes (MSB first):
+	- ID of a piece which was captured (4b), ID of a piece which has moved (4b)
+	- ID of a square this piece has moved from
+	- ID of a square this piece has moved to
+	- Other flags of a move, e.g. if the move is a pawn promoti0n.
+	
+	In some cases, a null value will correspond to a zero value. Luckily, this issue can be sometimes easily eliminated - e.g. a white king has id of 0, 
+	but that piece can never be captured...
+
+b) Position
+	This 4B integer contains all information of the position, which are not deducible from the board state of pieces, such as which side is currently to move.
+	
+c) Bitboard(s)
+	In general, a bitb0ard is a 8B integer where one bit corresponds to one square of a board, as board has exactly 64 squares. 
+	Therefore, every bitboard can encode one piece of boolean information for each square.
+	The most common type of information is: "Is there a white king / white pawn / white knight ... " on this square? This means that an array of 12 bitboards (named as BitBoards)
+	is enough to encode the whole state of all pieces.
+	
+	A union of these bitboards can be used to determine if there is a any white/black piece, or any piece in general - this improves the speed of move generation.
+	
+	Used Bitboards:
+	
+	BitBoards[0]...BitBoards[11]: Is a piece with this ID (0 - white king ... 11 - black queen) on the square?
+	Wmask, Bmask, Block: Is there a white/black/any piece on this square?
+	moves: Can a piece move on this square?
+	
+Appropriate bit operations are needed to deal with all variables.
+
+3) Start of game
+
+When starting a new game, the engine needs to load the starting position. The starting position is kept in a pseudo-FEN string. This string is parsed and the STATE OF POSITION 
+(e.g. positions of pieces) are saved into class variables. After that, all is left to the form application - it will handle following inputs.
+
+Functions used: Initialize (wrapper), FenToStr, TightFenToChar (decode FEN string), CreateBBoards(transforms array of chars - pieces - into corresponding bitboards)
+
+4) Game rules
+
+a) Moves of pieces 
+
+If a player is to move, the program will scan the whole board and determine pseudo-legal moves for all pieces of given color (if an AI plays) 
+or all pseudo-legal moves of selected piece (if a human plays). The function MoveGeneration_White, for example, will find a king of the given square, and will then call function 
+MovesKing. This function uses a lookup table for all squares where king can move from, and returns appropriate bitboard - a 64-bit integer where every set bit
+corresponds to a square where the king can move. After that, a function Bit - which searches if a bit is set on the given position is called, and if the bit is actually set,
+a move is generated - from the square where king stands, to the square which is currently inspected.
+
+Some special moves, such as castling, are unsuitable for this piece-centric approach, and are generated separately.
+
+Functions used: MoveGeneration_Black, MoveGeneration_White (general move generation for the whole board), King_Moves, Knight_Moves ... (moves for a specific piece).
+
+b) Move legality
+
+Since king has "royal" value, an opponent must not have a chance to take it. Therefore, some moves which coould be normally made, are impossible (illegal). 
+This is always tested retroactively. First a move is made, and then is checked if a king is not under attack. 
+
+For the checking 0f attack, move as every piece is generated from the king's location, and is checked whether the moves don't collide with piece of the opposite color. 
+E.g. if a king was a rook and could take the rook at the square, it means the king is under attack of the rook.
+
+Functions used: Attacked (checks if a square is under attack)
+
+c) Game end:
+
+If there is no legal move, the game ends in a mate or stalemate. This is resolved in the analysis functions - if every move is illegal, no move is chosen by the computer, 
+and therefore it jumps to conclusion the game is ending.
+
+Another way for the game to end is if there is no sufficient material (in order to give mate), or that the game has been going for 50 moves without capture or pawn move. 
+In this case, the game is always drawn.
+
+Functions used: MakeMove, UndoMove, (makes or unmakes moves, changing the move counter), InsufMaterial (checks if a mate is possible with this material), 
+NoProgress (50 moves rule), EndMate (ends game with mate or stalemate)
+
+5) Calculation and static evaluation
+
+The evaluation consists of three phases: The first one is classic alpha-beta evaluation. The second one is quiescence search, where - if a maximum depth is reached
+by alpha-beta evaluation - series of exchanges are evaluated until a moment, where player to move has no legal captures. The third one is static evaluation,
+which is mostly based on material + squares where pieces are standing + small randomness factor. This one evaluates all positions during quiescence search or at the end of it. 
+After that, the evaluation propagates back to the alpha-beta function.
+
+The alpha-beta function also picks up series of best moves, called "principal variation".
+
+Functions used: Evaluation (evaluates position), LazyEvaluation (simpler function, only for material calculation purposes), EndMateEval(evaluation of mate/stalemate positions),
+NoProgress, InsufMaterial (draw state evaluations), AlphaBeta, Quisce (DFS searches).
+
+6) Game saving
+
+After a move is made, it is decoded from its integer format to a human-readable format and added to the notation of current game. 
+It is not a real PGN notation, but would be accepted on human player's score sheet.
+In addition, to the notation also a computer's evaluation (as a comment) is added.
+If the notation is saved by a player, it will be furtherly decoded and saved into file "prepsana.txt"
+and this format is accepted by some PGN converter sites, allowing user to fully convert the game.
+
+Functions used: ComputersMove, PlayersMove (makes move, recorded by notation), RewritePartia (rewrites and saves notation)
+
+7) Game flow
+
+To sum, how the game goes - assume AI vs AI case (in the case of human playing, the program will wait until player makes a move, then behaves similarly):
+
+a) Board initializes: Position, BitBoards change appropriately, Notation gets initialized
+
+b) Computer thinks: Sets its depth - partially influenced by user, partially based on current situation
+
+c) Computer evaluates: Generates all moves from current position, makes every single one on the board,analyzes it further, then retracts it and continues 
+(This does not show to the user). 
+
+d) Computer decides move: During the alphabeta search, the "best" variation has been generated; Computer picks up the first move of the variation and plays it. 
+
+e) Computer plays move: All the bitboard and positional variables which needed to be changed will change, an extra move is added to the notation, 
+	and the done move shows in form as well.
+
+f) Computer/Human has no legal move or the game is drawn: An engine evaluates if the position is mate or drawn and concludes the game with appropriate result.
+
+II. Engine
+
+
+1) Purpose
+
+The "Engine" takes care of these things:
+
+- creating state of new game
+- tracking pieces' positions and other aspects of the board (e.g. which side is to move)
+- recording notation of current game
+- game rules (all possible moves, end of game...)
+- "thinking" of AI 
+
+2) Important variables
+
+The engine is able to track only one state of the board. This is being done by the following variables:
+
+2A) Board state
+
+a) ulong[] BitBoards
+
+A bitboard is a term used in chess programming to represent one flag for all squares on a chess board with use of one integer. 
+Since ulong variable has 64 bits as well as chess board has squares, each square can be represented by one bit. 
+If a bit on a given position is set, the flag is active. This can be easily checked by bit operations (see method Bit()).
+
+The array BitBoards consists of 12 such bitboards,
+with each index representing one piece:
+
+0-5: white
+0 - king
+1 - pawn
+2 - knight
+3 - bishop
+4 - rook
+5 - queen
+6-11: black
+6 - king
+7 - pawn
+8 - knight
+9 - bishop
+10 - rook
+11 - queen
+
+This allows to easily check if a piece is present on given square: 
+if we want to check if a white rook is present of square b7 (which has index of 9), then we check if 9th LSb in BitBoards[4] is set.
+
+b) ulong Wmask, ulong Bmask, ulong Block
+
+Wmask is a disjunction of white pieces' bitboards, Bmask a disjunction of black pieces' bitboards and Block is a disjunction of Wmask and Bmask.
+
+These variables can quickly speed up searching. For example, if we want to know if any piece is present on square #6,
+then instead of looping through all pieces' bitboards, we can first check the 6th bit in Block, then Wmask or Bmask. In worst case, we will need to do 9 bit checks (black queen), but if a piece is not present, we will need to do only 1 bit check.
+
+All of these variables must be updated as soon as the BitBoards[] themselves are updated.
+
+c) int Position
+
+While knowing location of all pieces on the board gives us lots of information (and in some cases, complete information), the position mostly requires some pieces of external information.
+Below are shown the aspects of position which are kept in this variable, with corresponding bits (LSb first):
+
+Castling rights (c8, g8, c1, g1): 0-3
+Player currently to move (1 white, 0 black): 4
+Square behind pawn which had just made a double-step (en passant square): 8-13
+Total half-moves (not implemented yet): 14-23
+Half-moves without piece being captured or pawn moving: 24-31
+
+d) ulong CurrentHash
+
+This variable is used for detecting repeated positions: one purpose is to detect threefold repetition 
+(not implemented due to analysis issues), the other is to implement Transposition Table in order to improve speed of depth analysis.
+
+Every position could be uniquely encoded in this way: concatenate BitBoards and Position, leading to 800-bit integer. 
+This encoding would hold little value to hash tables due to its size. The idea of hashing in this project (called Zobrist Hashing) is to 
+generate a random ulong value for every bit, and then xor values where the bit is equal to 1.
+
+e) ulong[] HashSeed, const int randomSeed
+
+HashSeed is an array of 784 ulongs, used for Zobrist Hashing (see CurrentHash). 
+12*64 numbers are used for representing every piece-square combinations, 1 number for beginning player, 4 numbers for castling rights,
+and 8 numbers for file where en-passant can take place in the next move.
+
+Although the numbers in array are generated randomly, the seed is constant - in order to have constant hashing at every launch.
+
+f) int Wking, int Bking
+
+As there can be only one king, it's simple to track his location by one integer rather than ulong. This comes in handy when
+there is need to check for checking/mate, as there is no need to loop through king's bitboard.
+
+g) bool white
+
+Many function are based on the fact whether a white or black player is currently making move, so this variable is used very often.
+
+2B) Movement of pieces, board representation
+
+Indices in normal board representation starts at square a8 and procceeds left-to-right, therefore directions are as following:
+west: -1
+east: +1
+north: -8
+south: +8
+
+Indices of squares:
+a8: 0
+b8: 1
+h8: 7
+a1: 56
+h1: 63
+
+a) int[] Indices, int[] Deinds
+
+Array Indices is made for converting "normal" indices to so-called 0x88 representation.
+In this representation, south/north movement changes index by +/- 16. This results in two things:
+
+- maximum value, h1 square, is equal to 119.
+- if (index & 0x88) is not zero, a square with this index doesn't exist on board.
+
+The advantage of this representation is that it's easier to check whether a piece has moved outside the board,
+ as it requires one bit operation and equality statement rather than 4 comparisons.
+
+Deinds returns 0x88 representation into normal one. Invalid squares have value of -1.
+This cannot be used to detect all invalid squares, as some of them can have negative value or higher value than 119.
+
+b) int[] Directions_<King> (Knight, Rook, Bishop, Queen, Pawn_White, Pawn_Black)
+
+These integers represent a change of square's index (in 0x88 representation, see 2B/a Indices) if a piece moves by 1 point in the given directions. 
+King, knight and queen can move in 8 directions, while rook and bishop can move in 4 directions. Pawns have specific movement.
+
+c) ulong[] AllKingMoves, ulong[] AllKnightMoves
+
+Both of these represent bitboard of all possible moves which can be made by king or knight on empty board, 
+based only on the initial square. 
+If I need to know possible pseudolegal moves for current position, 
+I need only to exclude squares where pieces of the same color (as the moving piece) are.
+
+d) string[] databaze
+
+"Databaze" is a collection of all starting positions, which were used for testing. All of them are in FEN-like format (see FenToStr and TightFenToChar, 2F/a)
+The normal starting position is at index 3.
+
+2C) Evaluation
+
+Unless the AI or player can see a forced mate or draw, 
+it needs to have a way to determine if a position at the end of calculation is advantageous. Following variables employ this purpose:
+
+a) int[] Values
+
+Classic "chess school" values of pieces are as following:
+
+King - practical infinity 
+Pawn - 1
+Knight - 3
+Bishop - 3 
+Rook - 5
+Queen - 9
+
+In order to reach more precision by next evaluation factors, I have multiplied the values by 100 (to avoid floats)
+ and also increased the value of bishop and knight to discourage disadvantageous exchanges (e.g. knight+bishop > rook+pawn):
+
+King - 65535
+Pawn - 100
+Knight - 320
+Bishop - 330
+Rook - 500
+Queen - 900
+
+As both sides have king, its material value is not considered in the evaluation functions.
+
+b) int[][]Posit_Values
+
+To every piece is assigned additional value, based on the currently occupied square. 
+The values are based on mobility on empty board, and also how the pieces are often threatened/blocked in games. 
+For example, knights are encouraged to be developed almost immediately, whereas pawns are advised to stay in back. 
+Therefore the computer tries to move first knights, and move with pawns only to enable other pieces.
+
+King has two separate values, one for early and middle game, the other one for late game (based on current material).
+
+c) uint[] Priorities
+
+If a capture is available, the computer first analyzes the capture made by piece with highest priority (which is the weaker one).
+This is based on normal principle of piece trading - usually capturing pieces can be recaptured, 
+therefore captures by pawn are usually the strongest captures of them all  
+(Searching best moves first increases efficiency of search algorithm).
+
+d) int depth_base, int deph
+
+These variables tell AI how deep should it search, before ending with unlimited "quiescence" search. 
+Variable depth_base is assigned to the engine at start of game, while deph is the actual depth -
+- it increases once material in position drops under certain value.
+
+In case of lower material, there are usually less moves to be made, therefore the search is faster, and therefore computer can spend 
+its assigned time by searching deeper.
+
+Additionally, endgames require very precise calculation, and player can often see further than the computer, if moves are forced.
+
+e) const int blacksquares, whitesquares
+
+This is a constant for bitboard of blacksquares (black squares have a set bit) or whitesquares. 
+Used when determining if bishops are on the same color (as they move only diagonally, so the color stays).
+
+3) Functions
+
+First of all, I would like to apologize for inconsistencies in "early" functions, where I used variables Wmask, Bmask... as parameters.
+The functions could use some cleaning, but they work.
+
+3A) Helper functions
+
+a)  bool Bit(ulong bitboard, int Pos),
+bool Bit(int number, int Pos)
+Checks if a bit is set on Pos position of the integer.
+
+b) void XH(int where)
+
+Changes the Zobrist hash (see HashSeed 2A/e) by xoring it by number on "where" index.
+
+c) ulong[] GenRandomNumbers(int howmany, int seed)
+
+Generates an array of ulongs (Length = howmany).
+
+d) class ULongRandom
+
+A class for easy generation of long random numbers 
+
+e) int HammingWeight(ulong x)
+
+Returns amount of set bits in the ulong x.
+
+3B) Generating moves
+
+The general algoritm is: 
+- Initialize bitboard of target squares
+- Loop through all directions of a piece
+	- Loop through all distances in this direction
+		- If outside board, break
+		- Else add the target square into bitboard
+		- If there is a piece on this square, break for this direction¨
+- Negate the bitboard by bitboards of pieces of the same color
+
+a) ulong Land_Moves(int[] Directions, int index, ulong WhiteBoard, ulong BlackBoard, ulong Block, bool white)
+
+This generates a bitboard of possible moves for "landing" pieces, which are king and knight.
+If one of the target squares for this piece is blocked, it has no impact on other squares where this piece can move. 
+
+b) ulong Ray_Moves(int[] Directions, int index, ulong WhiteBoard, ulong BlackBoard, ulong Block, bool white)
+
+This generates a bitboard of possible moves for "ray" pieces, which can move by more squares in one direction (bishop, rook, queen).
+If moves are generated in one direction, then if a square is blocked, all other squares past it will be unavailable 
+(as pieces cannot jump).
+
+c) ulong Land_Captures(int[] Directions, int index, ulong WhiteBoard, ulong BlackBoard, ulong Block, bool white)
+ulong Land_Captures_Premade(ulong[] table, int index, ulong WhiteBoard, ulong BlackBoard, ulong Block, bool white)
+
+This function generates only captures, and could be used e.g. when determining if king is in check.
+Generation is the same as for all moves, the only difference is that squares where no piece of the opposite color resides are excluded.
+
+However, if I exclude the two last and-operations, the bitboard will be based only on the initial square. 
+That's what the function Land_Captures_Premade is made for. The ulong[]table is either of the AllKingMoves or AllKnightMoves (see 2B/c)
+	
+d) ulong Ray_Captures(int[] Directions, int index, ulong WhiteBoard, ulong BlackBoard, ulong Block, bool white)
+
+This function generates only captures for bishop, rook or queen. 
+Difference between this function and function Ray_Moves is that if square is not blocked, 
+it is not added to the bitboard of possible captures (as there is no piece to be taken).
+
+At the end of function, final filtering is being made - 
+squares with the pieces of same color are excluded, squares with pieces of opposite color are included.
+
+e) ulong FreeKingMoves(int index), ulong FreeKnightMoves(int index)
+
+These generate bitboard for all possible moves of king/knight on empty board, at the given #index square.
+
+f) ulong[] initKingMoves(), ulong[] initKnightMoves()
+
+Efficient generation of arrays AllKingMoves and AllKnightMoves, respectively.
+
+g) ulong Bishop_Moves(int index, ulong WhiteBoard, ulong BlackBoard, ulong Block, bool white),
+ulong Rook_Moves(int index, ulong WhiteBoard, ulong BlackBoard, ulong Block, bool white),
+ulong Queen_Moves(int index, ulong WhiteBoard, ulong BlackBoard, ulong Block, bool white)
+
+All of these functions call function Ray_Moves with specific direction for each piece, 
+producing a bitboard of pseudolegal moves for these pieces.
+
+h) ulong King_Moves(int index, ulong WhiteBoard, ulong BlackBoard, ulong Block, bool white),
+ulong Knight_Moves(int index, ulong WhiteBoard, ulong BlackBoard, ulong Block, bool white)
+
+These functions call Land_Moves with direction for king or knight, respectively, 
+producing a bitboard of pseudolegal moves for these pieces.
+This function is not used in the generation itself (see MovesKing, MovesKnight)
+
+i) ulong MovesBishop(int index, ulong WhiteMask, ulong BlackMask, ulong Block, bool white),
+ulong MovesRook(int index, ulong WhiteMask, ulong BlackMask, ulong Block, bool white),
+ulong MovesQueen(int index, ulong WhiteMask, ulong BlackMask, ulong Block, bool white)
+
+A rewriting of functions Bishop_Moves, Rook_Moves, Queen_Moves for the sake of consistency (see MovesKing, MovesKnight).
+
+j) ulong MovesKing(int index, ulong WhiteMask, ulong BlackMask, ulong Block, bool white),
+ulong MovesKnight(int index, ulong WhiteMask, ulong BlackMask, ulong Block, bool white)
+
+Unlike MovesBishop,MovesRook or MovesQueen, these functions use static arrays AllKingMoves or AllKnightMoves for move generation.
+
+k) ulong CapturesKing(int index, ulong WhiteMask, ulong BlackMask, ulong Block, bool white),
+ulong CapturesKnight(int index, ulong WhiteMask, ulong BlackMask, ulong Block, bool white),
+ulong CapturesBishop(int index, ulong WhiteMask, ulong BlackMask, ulong Block, bool white),
+ulong CapturesRook(int index, ulong WhiteMask, ulong BlackMask, ulong Block, bool white),
+ulong CapturesQueen(int index, ulong WhiteMask, ulong BlackMask, ulong Block, bool white)
+
+Returns bitboard of pseudolegal captures of corresponding piece.
+
+l) ulong MovesPawn(int index, ulong WhiteMask, ulong BlackMask, ulong Block, bool white)
+
+Generates a bitboard for pawn's moves, excluding en-passant. Given pawns' irregular movement, every case is resolved specifically.
+
+m) ulong genCapturesPawn(int index, bool white)
+
+Returns bitboard of squares which are currently attacked by white/black pawn.
+
+n) short genECapturesPawn(int index, bool white)
+
+Returns two-byte number. Each byte is an index of square which is attacked by pawn on input index. 
+This means if only one capture is available, the other square will be wrongly presented as a8 (index 0), 
+but this has no negative impact on purpose of this function.
+
+o) ulong[] initPawnCaps(bool white),
+short[] initEPawnCaps(bool white)
+
+Efficient initialization of arrays CapturesPawn_White, CapturesPawn_Black, EP_Pawn_White, EP_Pawn_Black,
+which are used as lookup tables.
+
+p) byte Castling_White(int position), byte Castling_Black(int position)
+
+Returns 0b00, 0b01, 0b10, 0b11 based on if white or black can castle kingside (upper bit) or queenside (lower bit) in current position.
+The possibility of castling is based on:
+- castling rights (if player hasn't moved king or rook yet, the right is valid)
+- free squares between king and rook
+- king not in check on all three squares
+
+q) bool Attacked(int index, ulong WhiteMask, ulong BlackMask, ulong Block, bool white, ulong[] Bitboards)
+
+Returns true if the square is attacked by at least one piece of the given color. Necessary for determining if king is checked.
+As moves are generated from the square in question, the pawn's color is inverted.
+
+r) ulong GenMoves(int index, int type, bool white, ulong WhiteMask, ulong BlackMask, ulong Block),
+ulong GenCaptures(int index, int type, bool white, ulong WhiteMask, ulong BlackMask, ulong Block)
+
+Wrappers for all move-generating functions. Excludes special moves, such as castling and en-passant captures.
+
+s) int[] EPGen(int epsquare, bool white)
+
+Generates two moves as integers (see function BuildMoveWhite, BuildMoveBlack), which represent en-passant captures.
+For example, if the "epsquare" is 19 (=f6), then the incoded moves will be e5xf6 e.p., and g5xf6 e.p. 
+under the condition a pawn is present on e5 or g5, respectively. 
+If the en-passant capture cannot be generated, integer 0 will be returned in the array.
+
+t) List<uint> MoveGeneration_White(ulong[] BBs),
+List<uint> MoveGeneration_Black(ulong[] BBs),
+List<uint> CapsGeneration_White(ulong[] BBs),
+List<uint> CapsGeneration_Black(ulong[] BBs)
+
+These functions generate list of all possible pseudolegal moves (or only captures) a given side can make. 
+In the rest of this description, I will refer only to MoveGeneration_White.
+For the format of move, see BuildMoveWhite.
+
+First of all, the function has to find pieces capable of moving. This is done by scanning Wmask bitboard. 
+When the bit on given index is set, the function scans through pieces' bitboards to find which exact piece resides on the square.
+Once found, a bitboard for all moves of this piece is generated.
+Lastly, this bitboard is scanned, and if a bit is set, it is possible to build a move using triplet "piece, square from, square to".
+
+For special moves:
+- if a pawn is promoted, move is copied 4 times, adding different promoted piece
+- en-passant moves are generated separately
+- castling is generated separately
+
+3C) Evaluation of a position
+
+a) int EndMateEval(bool white, int dep)
+
+This function is called when a player has no legal move available. If a moving player is not checked, 
+then the position is called stalemate and therefore has an evaluation of 0.
+
+If a black player is to move and is checked, the position is evaluated as maximally positive for white. 
+In order to encourage quicker mates (in less moves), the value is divied by the current depth - 
+if the mate was found at higher depth, it means more moves were needed to reach that, and therefore is less advantageous.
+
+Based on how Alphabeta function (see 3C/ ) works, the same evaluation is used when white is to move. 
+Therefore, the result of this function is always non-negative.
+If the argument "depth" was too high, the function could produce worse result than standard material evaluation. 
+However, such depth is unrealistic for chess engines.
+
+
+b) bool NoProgress()
+
+From FIDE rules:
+If 50 consecutive moves have been made without capturing a piece or moving a pawn, a player has right to claim a draw.
+If 75 such moves have been made, position is instantly drawn.
+
+I am calling these moves "blank moves" and declare a draw after 50 of these moves are made (with analysis evaluation of 0).
+
+
+c) bool InsufMaterial()
+
+A position is instantly drawn when there is no legal sequence of moves which can result in a mate.
+Chess engines can detect only minority of these positions - as name suggests, when there are so little pieces that 
+a mate position cannot be "built" from them.
+
+Conditions needed to be met are these:
+- no pawns, rooks or queens (pawns can promote to rook or queen, rooks and queens can mate with only help from king)
+- bishops on only the same colored squares OR no bishops and only one knight (regardless of color)
+
+In evaluation functions, these positions always return 0.
+
+d) int LazyEvaluation(bool white)
+
+Returns current amount of material of white/black player,excluding king. See 2C/a Values.
+
+e) int Evaluation()
+
+Evaluates the whole position by these factors:
+
+- material (2C/a)
+- bonus for position of each piece on the board (2C/b); rank is flipped for black pieces
+- +0.4 pawns for bishop double (common strategical advantage; explanation - two bishops can never interfere with each other)
+- different values for king in case of endgame (total material is less than 20 pawns total)
+
+3D) Game progress
+
+a) uint BuildMoveWhite(int piece, int from, int to)
+uint BuildMoveBlack(int piece, int from, int to)
+
+Returns 4-bit integer with these informations (MSB first):
+first byte: upper 4 bits - which piece has been captured (0 if none), lower 4 bits - which piece has moved
+second byte: square which has this piece moved from
+third byte: square which has this piece moved to
+fourth byte: capture flag (1b), kingside/queenside castling flag (2b), promotion flag (1b), promoted piece (2b),
+	pawn-doublemove flag (1b), en-passant flag (1b)
+
+Special moves, such as promotion (default to queen) and castling are resolved in this function as well.
+If a pawn moves diagonally, en-passant flag is raised. If there is no piece (to capture)
+	on the final square, then en-passant flag will stay raised.
+
+b) uint[] MakeMove(uint move, bool white)
+
+Returns array of two uints: first one is the input move, second one is current position state.
+More importantly, changes the board state based on current move:
+
+- changes bits on bitboards of affected pieces (moving,captured,promoted)
+- changes position's hash
+- flips player which is currently to move
+- increments or nullifies blank move count
+- changes castling rights or en-passant possiblity 
+	(if a pawn makes a doublemove, square behind it is immediately flagged for en-passsant)
+
+Some things, such as blank moves (no progress) or "positional" part of the hash 
+are extracted from the corresponding variables, and returned to them at the end of function.
+
+c) uint UndoMove(uint[] memo, bool white)
+
+An inverse function to MakeMove (3D/c).
+First element of the memo array is the previously made move - contains enough information to reconstruct the board state.
+Second element of the memo array is Position state - other aspects, e.g. castling rights, are hidden in it. 
+	Replacing the current Position variable with the input one is sufficient enough to reset these.
+
+3E) Computer's analysis
+
+a) int ComputersMove(bool white, int totmoves,int depth_base)
+
+Warning: This function is not fully optimized, but is called only once per ply in each game, 
+therefore does not have that high performance impact.
+
+This function represents the full logic "computer" (AI) does when it is supposed to move.
+
+One of the parameters is depth_base. That one is set by player, and represents minimal depth of 
+how "deep" the computer is able to see.
+Near the start of the function, computers checks current material. If it is too low, it improves its in-depth search
+(endgames require more precision, but are also quicker to calculate).
+
+After that, informative variables NodesSearched and TimeSpent are initialized (not used in form application).
+
+Next, an array principalVariation is initialized and function AlphaBeta is called (see 3E/b).
+This results in principalVariation be filled with series of best moves (according to AI), and 
+variable analysisEvaluation will contain the evaluation of position
+made after series of principalVariation moves.
+
+After this, first move of principalVariation is chosen and made (see MakeMove, 3D/b).
+A case that should not happen is that if move is illegal (which means there is no possible move). This would result in game's end.
+
+Correct making of move results in notation of current game being updated, and saved in file "partie.txt" (rewrites old one).
+If this move has created draw situation, game ends.
+
+Returns either move that has been made (see BuildMoveWhite, 3D/a), or mate/stalemate/draw state:
+ 1 for draw, 2 for black wins, 3 for white wins.
+
+b) int AlphaBeta(int currdepth, int maxdepth, int alpha, int beta, bool white, uint[] pline, bool evaluation_system)
+
+The standard algorithm for evaluating chess-like games. 
+The positional evaluation is described in Quisce (see 3E/c) and whole 3C section.
+If evaluation_system is true, the evaluation is partially random (see 3E/c).
+
+In short: computer generates all possible pseudolegal moves from this position and sorts them by priority (see SortMoves 3E/d).
+Then, it loops through making all moves, evaluates them by recursively calling AlphaBeta on the new position, and unmakes them.
+If the move is illegal, it's not evaluated.
+If no move is legal, the flag "end" stays raised, and position is evaluated as mate or stalemate (see EndMateEval 3C/a).
+If the algoritm reaches maximum depth, the position continues to be evaluated by quiescence search (see Quisce 3E/c).
+
+The algorithm additionally contains two arrays uint[]line and uint[]pline, which contain the principal variation in current depth.
+If evaluation of move is greater than alpha ( = increases our lowest guaranteed score), 
+the current move is added to the principal variation.
+
+Returns score of position - an evaluation of position which players reach with their supposedly best moves.
+
+c) int Quisce(int alpha, int beta, bool white, bool evaluation_system)
+
+Quiescence search - middle phase of analysis, the moderator between AlphaBeta (see 3C/b) 
+and "static" positional evaluation (see Evaluation 3C/e).
+
+The motivation for this search is as following: AlphaBeta can consider the last move to be capture. 
+Since AlphaBeta wasn't allowed to analyze deeper, it will consider the state on board as beneficial, 
+not recognizing the capturing piece can be immediately recaptured. 
+
+Quisce solves this problem by using search which is not limited by depth, but only by types of moves - 
+evaluates only captures, which drastically change the evaluation.
+
+For the move generation, more efficient function which consider only captures are used (see 3B/t). 
+This requires two changes in the analysis itself:
+
+Firstly, the algorithm cannot determine if a player is in mate/stalemate, or simply does not have any legal capture available.
+That's why this is ommited.
+
+Secondly, there can be a case when no beneficial captures are available (all pieces are protected). 
+In this case, we can assume there is at least one other move which doesn't make position necessarily worse 
+(the opposite, zugzwang, occurs in insignificant minority of cases) and return evaluation of current position.
+
+The evaluation itself has also a factor of randomness (if evaluation_system is true), about +- 0.25 pawns.
+This surprisingly encourages the AI to have more mobility available and to do forcing moves (opponent has low amount of responses).
+The reasoning is: if a computer has equally good moves available, but better mobility, 
+it has higher chance to evaluate one of the moves with high bias. 
+(From chess programming wiki: a computer with fully random evaluation of depth 5 
+	(classic minimax algorithm) has won 100-0 against random-moves computer).
+
+Returns evaluation of current position, when only captures and static position are evaluated.
+
+d) void SortMoves(uint[]moves)
+
+Assigns a priority to each capture or promotion, and sorts collection of moves by this priority.
+The algorithm uses stable sorting, although unstable one will work as well, and can partially replace shuffling function.
+
+For the priority of captures, see 2C/c.
+
+For the priority of promotions - usually promoted piece is going to get instantly captured, 
+	so analysis algorithms can evaluate queen/rook promotion as equal - but it is more logical to promote to a queen.
+
+e) int AlphaBeta_Rewritten(int currdepth, int maxdepth, int alpha, int beta, bool white, uint[] pline, bool evaluation_system)
+
+This is a faster version of AlphaBeta (see 2E/b), as it uses so-called Transposition Table.
+The idea behind Transposition Table is the common idea of dynamic programming: if we reach the same position in different order of moves, 
+their evaluation should be the same, so why not reuse the old one?
+
+This requires usage of hashing (see HashSeed 2A/e) and storing the positions in dictionary, I have used class Hashentry for that.
+Apart from previous evaluation and hash, the "flag" information is stored as well. If flag is equal to:
+0 - this continuation has not been refuted, (can increase current alpha)
+1 - this continuation has been proved to be the best for both sides (can be returned right away)
+2 - this continuation has been refuted by beta cutoff (can decrease current beta)
+
+Due to hash collisions and wrong evaluation, I have abandoned this idea, as well as checking for repetitions.
+ My plan is to eventually return to it and implement succesfully.
+
+Returns evaluation of position reached by the best moves of both sides.
+
+3F) Notation, initializing
+
+a) string FenToStr(string fen),
+char[] TightFenToChar(string fen)
+
+The first function takes as input the pseudo-fen string from the databaze array (see 2B/d), clears spaces from it, and replaces numbers 
+(used for indicate series of blank squares) with hyphens "-".
+The output of this function is used as input to the second function.
+
+The second function takes output of the first function. 
+Sets the bits of Position variable (see 2A/c) accordingly to the input string (castling, en-passant square, color-to-move)
+and returns a char array which represents the board (one char = one square).
+
+b) ulong[] Initialize(int idvychozi)
+
+Function which launches the new game. The "idvychozi" is the index of position in databaze array (2B/d).
+Functions FenToStr and TightFenToChar reads the pseudo-fen string of the position (see 3F/a).
+After that, the 64-char array is used to change pieces' bitboards for the current position (see CreateBBoards 3F/c) 
+and hash for current position is created (see HashPosition 3F/d)
+Returns Bitboards of current pieces.
+
+c) ulong[] CreateBBoards(char[] board)
+
+Scans the char array and adds the corresponding piece to each bitboard (See BitBoards 2A/a).
+
+d) ulong HashPosition(ulong[] rgn)
+
+Scans each bitboard and Position integer, returns a Zobrist hash of these factors (See 2A/e).
+
+III. Form
+
+1) Purpose
+
+The main purpose of the form is to bring each position of chess game into graphical form, and display it as traditional chess board.
+Controls allow user to:
+
+- make moves on their own (with the help of showing possible moves)
+- change the game settings (AI depth, colors of human and AI player)
+- flip the board (to see from opposite player's perspective)
+- see into computer's way of thinking (which moves it thinks are the best)
+
+2) Layout
+
+a) panel1
+
+The first panel is the biggest one and contains chess board with its coordinates.
+Its height is automatically set to match its width. 
+
+The chess board consists of 64 buttons, where each square matches one button, this allows the user to control pieces. 
+A position of each button is determined by its index. 
+In case of flipped board, each index is subtracted from 64 and the resulting number determines its position.
+
+On the edge of board, coordinates are being shown: ranks next to the left edge, files below the bottom edge.
+Flipping the board changes coordinates accordingly.
+
+b) panel2
+
+Height of this panel depends on the size of panel1 (see 2/a) and is positioned at its left side.
+
+This panel contains various board controls. (e.g. flip, new game).
+Most of them are square, with size being half the width of whole panel.
+
+c) panel3
+
+Width of this panel depends on the size of panel1 (see 2/a) and is positioned below it.
+
+This panel contains textboxes with game-related information (e.g. state of game end) and also pawn promotion menu.
+
+3) Buttons
+
+a) Board buttons
+
+Each button on board represents one square. Clicking a button can results in different actions:
+- light or dark background: If a piece belongs to the currently moving player, highlights the piece and all squares where this piece is allowed to move with green color. Otherwise does nothing.
+- highlighted square: If an empty square or opponent's piece, makes a move on this position with currently highlighted piece. If a player clicked on highlighed piece, de-highlights all squares.
+
+If the game ends, all board buttons get disabled.
+
+b) Promotion buttons
+
+These buttons only show and get enabled when user orders pawn to move on the last rank. The buttons show pieces which pawn can promote to (queen, rook, bishop, knight).
+The color of these pieces is the same as color of the pawn. After a piece is selected, the move with promotion is made, and the buttons get hidden again.
+
+c) Flip button
+
+Flips the board by 180 degrees by adjusting board button locations and coordinates appropriately.
+The button also shows which player perspective are we watching (white means that the rank 1 is at bottom of the board).
+
+d) Save notation button
+
+The current game is temporarily saved in a file "bin/Release/partie.txt".
+Clicking this button will rewrite the notation into a file "bin/Release/prepsana.txt" in a changed format. Such format was accepted
+by page http://www.caissa.com/chess-tools/pgn-editor.php .
+By copying notation into the page (select "Insert PGN file") you can get full PGN format.
+
+e) New game and difficulty buttons
+
+The button "New game" creates a new game with the parameters that are currently shown on the button:
+AI vs AI, Player vs Player, AI vs Player, Player vs AI . The first parameter is for white side, the second one for black side.
+The number following AI is the default depth search.
+In order to change the parameters, click on buttons above the NewGame button:
+
+"Player" will set human player as white/black.
+"AI" will set AI with the currently showing depth as white/black.
+Buttons +/- will change the depth for the next time you click on the AI buttons (text changes accordingly)
+
+4) TextBoxes
+
+a) Coordinates
+
+Rank coordinates are at the left side of the board. In case of white's perspective, they are ordered 8->1 (top to bottom).
+File coordinates are below the board. In case of white's perspective, they are ordered a->h (left to right).
+
+b) Game end box
+
+This box only shows when game ends (mate, stalemate, insufficient material, 50 moves without moving pawn or capturing piece) with the according result.
+
+c) Computer analysis box
+
+This box is permanently enabled. After computer makes a move, it will show principal variation - expected best move sequence
+and evaluation of the final position (from its perspective).
+
